@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"google.golang.org/grpc/metadata"
 	"net"
 	"net/http"
 	"os"
@@ -50,9 +51,12 @@ func main() {
 	}
 
 	// Initialize repository, service, and handler
-	repo := repository.NewMovieRepository(db, log)
-	svc := service.NewMovieService(repo, log)
-	movieHandler := handler.NewMovieHandler(svc, log)
+	repo := repository.NewMovieRepository(*db, *log)
+	svc := service.NewMovieService(repo, *log)
+	movieHandler := handler.NewMovieHandler(svc, *log)
+	//repo := repository.NewMovieRepository(*db, *log)
+	//svc := service.NewMovieService(*repo, *log)
+	//movieHandler := handler.NewMovieHandler(*svc, *log)
 
 	// Initialize Prometheus metrics
 	metrics.InitMetrics()
@@ -61,7 +65,7 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(metrics.UnaryServerInterceptor),
 	)
-	pb.RegisterMovieServiceServer(grpcServer, movieHandler)
+	pb.RegisterMovieServiceServer(grpcServer, &movieHandler)
 	reflection.Register(grpcServer)
 
 	// Start gRPC server
@@ -83,7 +87,14 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	gwmux := runtime.NewServeMux()
+	gwmux := runtime.NewServeMux(
+		runtime.WithMetadata(func(ctx context.Context, req *http.Request) metadata.MD {
+			return metadata.Pairs(
+				"x-forwarded-host", req.Host,
+				"x-forwarded-proto", "http", // TODO in prod https
+			)
+		}),
+	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	err = pb.RegisterMovieServiceHandlerFromEndpoint(ctx, gwmux, grpcAddr, opts)
 	if err != nil {

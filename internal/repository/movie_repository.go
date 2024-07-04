@@ -9,13 +9,21 @@ import (
 	"movie-project/pkg/logger"
 )
 
-type MovieRepository struct {
-	db     *gorm.DB
-	logger *logger.Logger
+type IMovieRepository interface {
+	Create(ctx context.Context, movie *model.Movie) error
+	GetByID(ctx context.Context, id uint) (*model.Movie, error)
+	List(ctx context.Context, offset, limit int) ([]*model.Movie, int64, error)
+	Update(ctx context.Context, movie *model.Movie) error
+	Delete(ctx context.Context, id uint) error
 }
 
-func NewMovieRepository(db *gorm.DB, logger *logger.Logger) *MovieRepository {
-	return &MovieRepository{db: db, logger: logger}
+type MovieRepository struct {
+	db     gorm.DB
+	logger logger.Logger
+}
+
+func NewMovieRepository(db gorm.DB, logger logger.Logger) MovieRepository {
+	return MovieRepository{db: db, logger: logger}
 }
 
 func (r *MovieRepository) Create(ctx context.Context, movie *model.Movie) error {

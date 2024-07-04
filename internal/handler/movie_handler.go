@@ -17,12 +17,12 @@ import (
 
 type MovieHandler struct {
 	pb.UnimplementedMovieServiceServer
-	service *service.MovieService
-	logger  *logger.Logger
+	service service.MovieService
+	logger  logger.Logger
 }
 
-func NewMovieHandler(service *service.MovieService, logger *logger.Logger) *MovieHandler {
-	return &MovieHandler{service: service, logger: logger}
+func NewMovieHandler(service service.MovieService, logger logger.Logger) MovieHandler {
+	return MovieHandler{service: service, logger: logger}
 }
 
 func (h *MovieHandler) CreateMovie(ctx context.Context, req *pb.CreateMovieRequest) (*pb.Movie, error) {

@@ -15,13 +15,13 @@ import (
 )
 
 type MovieService struct {
-	repo     *repository.MovieRepository
-	logger   *logger.Logger
+	repo     repository.MovieRepository
+	logger   logger.Logger
 	validate *validator.Validate
 }
 
-func NewMovieService(repo *repository.MovieRepository, logger *logger.Logger) *MovieService {
-	return &MovieService{
+func NewMovieService(repo repository.MovieRepository, logger logger.Logger) MovieService {
+	return MovieService{
 		repo:     repo,
 		logger:   logger,
 		validate: validator.New(),
